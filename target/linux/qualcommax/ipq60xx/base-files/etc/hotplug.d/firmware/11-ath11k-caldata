@@ -9,10 +9,14 @@ board=$(board_name)
 case "$FIRMWARE" in
 "ath11k/IPQ6018/hw1.0/cal-ahb-c000000.wifi.bin")
 	case "$board" in
-	8devices,mango-dvk)
+	8devices,mango-dvk|\
+	alfa-network,ap120c-ax)
 		caldata_extract "0:ART" 0x1000 0x20000
 		;;
-	cambiumnetworks,xe3-4)
+	anysafe,e1|\
+	cambiumnetworks,xe3-4|\
+	philips,ly1800|\
+	sy,y6010)
 		caldata_extract "0:ART" 0x1000 0x10000
 		;;
 	cmiot,ax18|\
@@ -30,14 +34,16 @@ case "$FIRMWARE" in
 		caldata_extract "0:art" 0x1000 0x10000
 		;;
 	tplink,eap610od|\
-	tplink,eap623od-hd-v1)
+	tplink,eap620hd-v3|\
+	tplink,eap623od-hd-v1|\
+	tplink,eap625od-hd-v1)
 		caldata_from_file "/tmp/factory_data/radio" 0 0x10000
 		;;
 	yuncore,fap650)
 		caldata_extract "0:art" 0x1000 0x20000
 		;;
-	jdcloud,re-ss-01|\
 	jdcloud,re-cs-02|\
+	jdcloud,re-ss-01|\
 	link,nn6000-v1|\
 	link,nn6000-v2|\
 	redmi,ax5-jdcloud)
@@ -47,6 +53,7 @@ case "$FIRMWARE" in
 	;;
 "ath11k/QCN9074/hw1.0/cal-pci-0000:01:00.0.bin")
 	case "$board" in
+	anysafe,e1|\
 	cambiumnetworks,xe3-4)
 		caldata_extract "0:ART" 0x26800 0x20000
 		;;

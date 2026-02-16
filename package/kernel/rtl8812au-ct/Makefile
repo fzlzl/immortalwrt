@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rtl8812au-ct
-PKG_RELEASE=1
+PKG_RELEASE=2
 
 PKG_LICENSE:=GPLv2
 PKG_LICENSE_FILES:=
@@ -28,7 +28,7 @@ define KernelPackage/rtl8812au-ct
   FILES:=\
 	$(PKG_BUILD_DIR)/rtl8812au.ko
   AUTOLOAD:=$(call AutoProbe,rtl8812au)
-  PROVIDES:=kmod-rtl8812au
+  PROVIDES:=@kmod-rtl8812au-any
 endef
 
 NOSTDINC_FLAGS := \

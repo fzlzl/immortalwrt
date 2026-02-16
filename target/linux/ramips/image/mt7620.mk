@@ -815,6 +815,7 @@ define Device/linksys_e1700
   DEVICE_VENDOR := Linksys
   DEVICE_MODEL := E1700
   SUPPORTED_DEVICES += e1700
+  DEFAULT := n
 endef
 TARGET_DEVICES += linksys_e1700
 
@@ -951,6 +952,7 @@ define Device/netgear_wn3100rp-v2
   DEVICE_VENDOR := NETGEAR
   DEVICE_MODEL := WN3100RP
   DEVICE_VARIANT := v2
+  DEFAULT := n
 endef
 TARGET_DEVICES += netgear_wn3100rp-v2
 
@@ -1155,10 +1157,12 @@ define Device/rostelecom_rt-fl-1
   $(Device/sercomm_cpj)
   DEVICE_MODEL := RT-FL-1
   DEVICE_ALT0_MODEL := RT-FL-1
+ifeq ($(IB),)
   ARTIFACT/initramfs-factory.img := \
 	append-image-stage initramfs-kernel.bin | check-size | \
 	sercomm-factory-cpj | gzip | sercomm-payload | \
 	sercomm-pid-setbit 0x11 | sercomm-crypto
+endif
 endef
 TARGET_DEVICES += rostelecom_rt-fl-1
 
@@ -1166,9 +1170,11 @@ define Device/rostelecom_s1010
   $(Device/sercomm_cpj)
   DEVICE_MODEL := S1010
   DEVICE_ALT0_MODEL := S1010.RT
+ifeq ($(IB),)
   ARTIFACT/initramfs-factory.img := \
 	append-image-stage initramfs-kernel.bin | check-size | \
 	sercomm-factory-cpj | gzip | sercomm-payload | sercomm-crypto
+endif
 endef
 TARGET_DEVICES += rostelecom_s1010
 
@@ -1630,6 +1636,7 @@ define Device/zyxel_keenetic-lite-iii-a
   IMAGES += factory.bin
   IMAGE/factory.bin := $$(sysupgrade_bin) | pad-to 64k | check-size | \
 		zyimage -d 2102018 -v "ZyXEL Keenetic Lite III"
+  DEFAULT := n
 endef
 TARGET_DEVICES += zyxel_keenetic-lite-iii-a
 

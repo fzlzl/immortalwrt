@@ -37,45 +37,52 @@
 	leds {
 		compatible = "gpio-leds";
 
+		led_sys_yellow: sys-yellow {
+			color = <LED_COLOR_ID_YELLOW>;
+			function = LED_FUNCTION_STATUS;
+			gpios = <&tlmm 32 GPIO_ACTIVE_HIGH>;
+		};
+
+		led_sys_amber: sys-amber {
+			color = <LED_COLOR_ID_AMBER>;
+			function = LED_FUNCTION_STATUS;
+			gpios = <&tlmm 35 GPIO_ACTIVE_HIGH>;
+		};
+
 		led_sys_green: sys-green {
 			color = <LED_COLOR_ID_GREEN>;
 			function = LED_FUNCTION_STATUS;
 			gpios = <&tlmm 37 GPIO_ACTIVE_HIGH>;
 		};
 	};
-};
 
-&tlmm {
-	mdio_pins: mdio-pins {
-		mdc {
-			pins = "gpio64";
-			function = "mdc";
-			drive-strength = <8>;
-			bias-pull-up;
-		};
-
-		mdio {
-			pins = "gpio65";
-			function = "mdio";
-			drive-strength = <8>;
-			bias-pull-up;
-		};
+	gpio-restart {
+		compatible = "gpio-restart";
+		gpios = <&tlmm 61 GPIO_ACTIVE_LOW>;
+		open-source;
 	};
 };
 
-&dp5 {
-	status = "okay";
-	phy-handle = <&rtl8211f_4>;
-	label = "lan";
-};
+&tlmm {
+	phy_reset_pins: phy-reset-pins {
+		pins = "gpio77";
+		function = "gpio";
+		drive-strength = <8>;
+		bias-pull-up;
+	};
 
-&edma {
-	status = "okay";
+	led_enable {
+		gpio-hog;
+		output-high;
+		gpios = <36 GPIO_ACTIVE_HIGH>;
+		line-name = "enable-leds";
+	};
 };
 
 &mdio {
 	status = "okay";
-	pinctrl-0 = <&mdio_pins>;
+
+	pinctrl-0 = <&mdio_pins>, <&phy_reset_pins>;
 	pinctrl-names = "default";
 	reset-gpios = <&tlmm 77 GPIO_ACTIVE_LOW>;
 
@@ -100,4 +107,30 @@
 			port_mac_sel = "QGMAC_PORT";
 		};
 	};
+};
+
+&qpic_nand {
+	status = "okay";
+
+	nand@0 {
+		reg = <0>;
+
+		nand-ecc-strength = <4>;
+		nand-ecc-step-size = <512>;
+		nand-bus-width = <8>;
+
+		partitions {
+			compatible = "qcom,smem-part";
+		};
+	};
+};
+
+&dp5 {
+	status = "okay";
+	phy-handle = <&rtl8211f_4>;
+	label = "lan";
+};
+
+&edma {
+	status = "okay";
 };

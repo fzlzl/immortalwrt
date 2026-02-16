@@ -10,9 +10,20 @@ PHYNBR=${DEVPATH##*/phy}
 board=$(board_name)
 
 case "$board" in
+	alfa-network,ap120c-ax)
+		label_mac=$(mtd_get_mac_binary 0:ART 0x12)
+		[ "$PHYNBR" = "0" ] && macaddr_add $label_mac 1 > /sys${DEVPATH}/macaddress
+		[ "$PHYNBR" = "1" ] && macaddr_add $label_mac 2 > /sys${DEVPATH}/macaddress
+		;;
+	anysafe,e1)
+		label_mac=$(mtd_get_mac_binary 0:ART 0x0)
+		[ "$PHYNBR" = "0" ] && macaddr_add $label_mac 1 > /sys${DEVPATH}/macaddress
+		[ "$PHYNBR" = "1" ] && macaddr_add $label_mac 2 > /sys${DEVPATH}/macaddress
+		[ "$PHYNBR" = "2" ] && macaddr_add $label_mac 3 > /sys${DEVPATH}/macaddress
+		;;
 	cmiot,ax18|\
 	zn,m2)
-		label_mac=$(mtd_get_mac_binary "0:art" 0x6)
+		label_mac=$(mtd_get_mac_binary 0:art 0x6)
 		[ "$PHYNBR" = "0" ] && macaddr_add $label_mac 1 > /sys${DEVPATH}/macaddress
 		[ "$PHYNBR" = "1" ] && macaddr_add $label_mac 2 > /sys${DEVPATH}/macaddress
 		;;
@@ -24,7 +35,7 @@ case "$board" in
 		;;
 	link,nn6000-v1|\
 	link,nn6000-v2)
-		label_mac=$(mmc_get_mac_binary "0:ART" 0x18)
+		label_mac=$(mmc_get_mac_binary 0:ART 0x18)
 		[ "$PHYNBR" = "0" ] && macaddr_add $label_mac 1 > /sys${DEVPATH}/macaddress
 		[ "$PHYNBR" = "1" ] && macaddr_add $label_mac 2 > /sys${DEVPATH}/macaddress
 		;;
@@ -46,7 +57,8 @@ case "$board" in
 		[ "$PHYNBR" = "1" ] && macaddr_add $label_mac 3 > /sys${DEVPATH}/macaddress
 		;;
 	tplink,eap610od|\
-	tplink,eap623od-hd-v1)
+	tplink,eap623od-hd-v1|\
+	tplink,eap625od-hd-v1)
 		label_mac=$(get_mac_binary /tmp/factory_data/default-mac 0)
 		[ "$PHYNBR" = "0" ] && macaddr_add $label_mac 1 > /sys${DEVPATH}/macaddress
 		[ "$PHYNBR" = "1" ] && macaddr_add $label_mac 2 > /sys${DEVPATH}/macaddress

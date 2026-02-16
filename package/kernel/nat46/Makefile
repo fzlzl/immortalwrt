@@ -3,11 +3,11 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=nat46
 
+PKG_MIRROR_HASH:=5d5c14bbb700490a9357c2c8baffd52615f3b572f82eb2fcbfc530bd23f2cdc3
 PKG_SOURCE_URL:=https://github.com/ayourtch/nat46.git
-PKG_SOURCE_DATE:=2024-08-12
+PKG_SOURCE_DATE:=2025-11-04
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=b42c37d5c6dee4593df0fc60b37bc7ec4ee243a4
-PKG_MIRROR_HASH:=2d7bbb6cc22808f7e81d716e6bd7a27d9978fb802496304851946627e21534a5
+PKG_SOURCE_VERSION:=adb2f72e6fb81ee11b54513d384b68e3c3d93464
 
 PKG_MAINTAINER:=Hans Dedecker <dedeckeh@gmail.com>
 PKG_LICENSE:=GPL-2.0
@@ -17,15 +17,17 @@ PKG_BUILD_PARALLEL:=1
 include $(INCLUDE_DIR)/package.mk
 
 define KernelPackage/nat46
-  DEPENDS:=@IPV6 +kmod-nf-conntrack6
+  DEPENDS:=@IPV6 +kmod-nf-conntrack
   TITLE:=Stateless NAT46 translation kernel module
   SECTION:=kernel
   SUBMENU:=Network Support
+ifneq ($(CONFIG_PACKAGE_kmod-nat46),)
   FILES:=$(PKG_BUILD_DIR)/nat46/modules/nat46.ko
   AUTOLOAD:=$(call AutoLoad,33,nat46)
+endif
 endef
 
-include $(INCLUDE_DIR)/kernel-defaults.mk
+ifneq ($(CONFIG_PACKAGE_kmod-nat46),)
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(STAGING_DIR)/usr/include/nat46
@@ -39,5 +41,17 @@ define Build/Compile
 		modules
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/nat46/modules/Module.symvers $(PKG_BUILD_DIR)/Module.symvers
 endef
+
+else
+
+define Build/Compile
+	:
+endef
+
+define Build/Install
+	:
+endef
+
+endif
 
 $(eval $(call KernelPackage,nat46))

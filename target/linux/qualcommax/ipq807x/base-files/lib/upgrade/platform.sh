@@ -1,39 +1,8 @@
 PART_NAME=firmware
 REQUIRE_IMAGE_METADATA=1
 
-RAMFS_COPY_BIN='fw_printenv fw_setenv head'
+RAMFS_COPY_BIN='fw_printenv fw_setenv head seq'
 RAMFS_COPY_DATA='/etc/fw_env.config /var/lock/fw_printenv.lock'
-
-xiaomi_initramfs_prepare() {
-	# Wipe UBI if running initramfs
-	[ "$(rootfs_type)" = "tmpfs" ] || return 0
-
-	local rootfs_mtdnum="$( find_mtd_index rootfs )"
-	if [ ! "$rootfs_mtdnum" ]; then
-		echo "unable to find mtd partition rootfs"
-		return 1
-	fi
-
-	local kern_mtdnum="$( find_mtd_index ubi_kernel )"
-	if [ ! "$kern_mtdnum" ]; then
-		echo "unable to find mtd partition ubi_kernel"
-		return 1
-	fi
-
-	ubidetach -m "$rootfs_mtdnum"
-	ubiformat /dev/mtd$rootfs_mtdnum -y
-
-	ubidetach -m "$kern_mtdnum"
-	ubiformat /dev/mtd$kern_mtdnum -y
-}
-
-asus_initial_setup() {
-	# Remove existing linux and jffs2 volumes
-	[ "$(rootfs_type)" = "tmpfs" ] || return 0
-
-	ubirmvol /dev/ubi0 -N linux
-	ubirmvol /dev/ubi0 -N jffs2
-}
 
 remove_oem_ubi_volume() {
 	local oem_volume_name="$1"
@@ -58,94 +27,6 @@ remove_oem_ubi_volume() {
 	fi
 }
 
-tplink_get_boot_part() {
-	local cur_boot_part
-	local args
-
-	# Try to find rootfs from kernel arguments
-	read -r args < /proc/cmdline
-	for arg in $args; do
-		local ubi_mtd_arg=${arg#ubi.mtd=}
-		case "$ubi_mtd_arg" in
-		rootfs|rootfs_1)
-			echo "$ubi_mtd_arg"
-			return
-		;;
-		esac
-	done
-
-	# Fallback to u-boot env (e.g. when running initramfs)
-	cur_boot_part="$(/usr/sbin/fw_printenv -n tp_boot_idx)"
-	case $cur_boot_part in
-	1)
-		echo rootfs_1
-		;;
-	0|*)
-		echo rootfs
-		;;
-	esac
-}
-
-tplink_do_upgrade() {
-	local new_boot_part
-
-	case $(tplink_get_boot_part) in
-	rootfs)
-		CI_UBIPART="rootfs_1"
-		new_boot_part=1
-	;;
-	rootfs_1)
-		CI_UBIPART="rootfs"
-		new_boot_part=0
-	;;
-	esac
-
-	fw_setenv -s - <<-EOF
-		tp_boot_idx $new_boot_part
-	EOF
-
-	remove_oem_ubi_volume ubi_rootfs
-	nand_do_upgrade "$1"
-}
-
-linksys_mx_pre_upgrade() {
-	local setenv_script="/tmp/fw_env_upgrade"
-
-	CI_UBIPART="rootfs"
-	boot_part="$(fw_printenv -n boot_part)"
-	if [ -n "$UPGRADE_OPT_USE_CURR_PART" ]; then
-		if [ "$boot_part" -eq "2" ]; then
-			CI_KERNPART="alt_kernel"
-			CI_UBIPART="alt_rootfs"
-		fi
-	else
-		if [ "$boot_part" -eq "1" ]; then
-			echo "boot_part 2" >> $setenv_script
-			CI_KERNPART="alt_kernel"
-			CI_UBIPART="alt_rootfs"
-		else
-			echo "boot_part 1" >> $setenv_script
-		fi
-	fi
-
-	boot_part_ready="$(fw_printenv -n boot_part_ready)"
-	if [ "$boot_part_ready" -ne "3" ]; then
-		echo "boot_part_ready 3" >> $setenv_script
-	fi
-
-	auto_recovery="$(fw_printenv -n auto_recovery)"
-	if [ "$auto_recovery" != "yes" ]; then
-		echo "auto_recovery yes" >> $setenv_script
-	fi
-
-	if [ -f "$setenv_script" ]; then
-		fw_setenv -s $setenv_script || {
-			echo "failed to update U-Boot environment"
-			return 1
-		}
-	fi
-}
-
 platform_check_image() {
 	return 0;
 }
@@ -166,7 +47,6 @@ platform_pre_upgrade() {
 platform_do_upgrade() {
 	case "$(board_name)" in
 	aliyun,ap8220|\
-	linksys,homewrk|\
 	zte,mf269-stock)
 		CI_UBIPART="rootfs"
 		nand_do_upgrade "$1"
@@ -181,7 +61,8 @@ platform_do_upgrade() {
 	netgear,sxs80|\
 	netgear,wax218|\
 	netgear,wax620|\
-	netgear,wax630)
+	netgear,wax630|\
+	zyxel,nwa210ax)
 		nand_do_upgrade "$1"
 		;;
 	asus,rt-ax89x)
@@ -254,7 +135,8 @@ platform_do_upgrade() {
 		nand_do_upgrade "$1"
 		;;
 	redmi,ax6-stock|\
-	xiaomi,ax3600-stock)
+	xiaomi,ax3600-stock|\
+	xiaomi,ax9000-stock)
 		part_num="$(fw_printenv -n flag_boot_rootfs)"
 		if [ "$part_num" -eq "1" ]; then
 			CI_UBIPART="rootfs_1"
@@ -286,9 +168,14 @@ platform_do_upgrade() {
 		CI_DATAPART="rootfs_data"
 		emmc_do_upgrade "$1"
 		;;
+	tcl,linkhub-hh500v)
+		tcl_upgrade_prepare
+		nand_do_upgrade "$1"
+		;;
 	tplink,deco-x80-5g|\
 	tplink,eap620hd-v1|\
 	tplink,eap660hd-v1)
+		remove_oem_ubi_volume ubi_rootfs
 		tplink_do_upgrade "$1"
 		;;
 	yuncore,ax880)

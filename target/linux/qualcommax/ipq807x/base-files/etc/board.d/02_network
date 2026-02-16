@@ -14,6 +14,7 @@ ipq807x_setup_interfaces()
 	aliyun,ap8220|\
 	cmcc,rm2-6|\
 	edgecore,eap102|\
+	tcl,linkhub-hh500v|\
 	tplink,deco-x80-5g|\
 	verizon,cr1000a|\
 	yuncore,ax880|\
@@ -30,6 +31,7 @@ ipq807x_setup_interfaces()
 	linksys,mx5300|\
 	linksys,mx8500|\
 	xiaomi,ax9000|\
+	xiaomi,ax9000-stock|\
 	zbtlink,zbt-z800ax)
 		ucidef_set_interfaces_lan_wan "lan1 lan2 lan3 lan4" "wan"
 		;;
@@ -69,6 +71,9 @@ ipq807x_setup_interfaces()
 	zyxel,nbg7815)
 		ucidef_set_interfaces_lan_wan "lan1 lan2 lan3 lan4 10g" "wan"
 		;;
+	zyxel,nwa210ax)
+		ucidef_set_interface_lan "uplink lan1" "dhcp"
+		;;
 	*)
 		echo "Unsupported hardware. Network interfaces not initialized"
 		;;
@@ -84,16 +89,13 @@ ipq807x_setup_macs()
 
 	case "$board" in
 	aliyun,ap8220)
-		wan_mac=$(cat /dev/mtd12 | awk -F '\t' '/product.mac/{print $2}')
+		wan_mac=$(cat $(find_mtd_part product_info) | awk -F '\t' '/product.mac/{print $2}')
 		lan_mac=$(macaddr_add $wan_mac 1)
 		label_mac=$wan_mac
 		;;
-	linksys,mx4200v2|\
-	linksys,mx4300|\
-	linksys,mx8500)
-		wan_mac=$(mtd_get_mac_ascii devinfo hw_mac_addr)
-		lan_mac=$(macaddr_add $wan_mac 1)
-		label_mac=$wan_mac
+	tcl,linkhub-hh500v)
+		wan_mac=$(mtd_get_mac_binary "0:ART" 0x5e290)
+		lan_mac=$(mtd_get_mac_binary "0:ART" 0x5e296)
 		;;
 	tplink,deco-x80-5g)
 		label_mac=$(get_mac_binary /tmp/factory_data/default-mac 0)
@@ -112,8 +114,12 @@ ipq807x_setup_macs()
 		lan_mac=$(macaddr_add $wan_mac 1)
 		label_mac=$wan_mac
 		;;
+	zyxel,nwa210ax)
+		label_mac=$(get_mac_label_dt)
+		lan_mac=$label_mac
+		;;
 	verizon,cr1000a)
-		wan_mac=$(mmc_get_mac_ascii "0:APPSBLENV" baseMAC)
+		wan_mac=$(mmc_get_mac_ascii 0:APPSBLENV baseMAC)
 		lan_mac=$(macaddr_add "$wan_mac" 1)
 		label_mac=$wan_mac
 		;;

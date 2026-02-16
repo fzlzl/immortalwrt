@@ -7,22 +7,10 @@ touch /etc/config/ubootenv
 
 board=$(board_name)
 
-ubootenv_add_mtd() {
-	local idx="$(find_mtd_index "${1}")"
-	[ -n "$idx" ] && ubootenv_add_uci_config "/dev/mtd$idx" "${2}" "${3}" "${4}"
-}
-
-ubootenv_add_sys_mtd() {
-	local idx="$(find_mtd_index "${1}")"
-	[ -n "$idx" ] && ubootenv_add_uci_sys_config "/dev/mtd$idx" "${2}" "${3}" "${4}"
-}
-
-ubootenv_add_mmc() {
-	local mmcpart="$(find_mmc_part "${1}")"
-	[ -n "$mmcpart" ] && ubootenv_add_uci_config "$mmcpart" "${2}" "${3}" "${4}" "${5}"
-}
-
 case "$board" in
+anysafe,e1|\
+philips,ly1800|\
+sy,y6010|\
 8devices,mango-dvk|\
 8devices,mango-dvk-sfp|\
 cambiumnetworks,xe3-4)
@@ -39,7 +27,9 @@ netgear,wax214|\
 netgear,wax610|\
 netgear,wax610y|\
 tplink,eap610od|\
-tplink,eap623od-hd-v1)
+tplink,eap620hd-v3|\
+tplink,eap623od-hd-v1|\
+tplink,eap625od-hd-v1)
 	ubootenv_add_mtd "0:appsblenv" "0x0" "0x40000" "0x20000"
 	;;
 linksys,mr7350|\
@@ -49,13 +39,13 @@ linksys,mr7500)
 yuncore,fap650)
 	ubootenv_add_mtd "0:appsblenv" "0x0" "0x10000" "0x10000"
 	;;
-jdcloud,re-ss-01|\
 jdcloud,re-cs-02|\
 jdcloud,re-cs-07|\
+jdcloud,re-ss-01|\
 link,nn6000-v1|\
 link,nn6000-v2|\
 redmi,ax5-jdcloud)
-	ubootenv_add_mmc "0:APPSBLENV" "0x0" "0x40000" "0x20000"
+	ubootenv_add_mmc "0:APPSBLENV" "" "0x0" "0x40000" "0x20000"
 	;;
 esac
 
